@@ -136,20 +136,28 @@ io.on("connection", socket => {
         client.flushUpdates();
     }, 1000 / 30);
     */
+    const updateQueue = [];
 
+    setInterval(() => {
+      if (updateQueue.length > 0) {
+        io.emit("batchUpdate", updateQueue);
+        updateQueue.length = 0;
+      }
+    }, 1000 / 30);
+    
     socket.on("setPixel", (x, y, color) => {
-        x = Math.floor(x);
-        y = Math.floor(y);
-        
-        client.color = color;
+      x = Math.floor(x);
+      y = Math.floor(y);
+  
+      client.color = color;
 
-        const chunkX = Math.floor(x / 16);
-        const chunkY = Math.floor(y / 16);
+      const chunkX = Math.floor(x / 16);
+      const chunkY = Math.floor(y / 16);
 
-        if(!getRankByID(client.rank).permissions.includes("protect") && chunkManager.get_protection(client.world, chunkX, chunkY) === true) return;
-        if(config.saving.savePixels) chunkManager.set_pixel(client.world, x, y, color);
-        
-        io.to(client.world).emit("newPixel", x, y, color);
+      if (!getRankByID(client.rank).permissions.includes("protect") && chunkManager.get_protection(client.world, chunkX, chunkY) === true) return;
+      if (config.saving.savePixels) chunkManager.set_pixel(client.world, x, y, color);
+  
+      updateQueue.push({ type: "newPixel", x, y, color });
     });
 
     socket.on("setLine", (from, to) => {
