@@ -30,20 +30,24 @@ socket.on("connect", () => {
         requestRender();
     });
 
-    socket.on("newPixel", (x, y, color) => {
-        const chunkX = Math.floor(x / CHUNK_SIZE);
-        const chunkY = Math.floor(y / CHUNK_SIZE);
+    socket.on("batchUpdate", updates => {
+      updates.forEach(update => {
+        if (update.type === "newPixel") {
+          const chunkX = Math.floor(update.x / CHUNK_SIZE);
+          const chunkY = Math.floor(update.y / CHUNK_SIZE);
 
-        let pixelX = Math.floor(x % 16);
-        let pixelY = Math.floor(y % 16);
-        
-        if (pixelX < 0) pixelX += 16;
-        if (pixelY < 0) pixelY += 16;
+          let pixelX = Math.floor(update.x % 16);
+          let pixelY = Math.floor(update.y % 16);
+      
+          if (pixelX < 0) pixelX += 16;
+          if (pixelY < 0) pixelY += 16;
 
-        if(chunks[`${chunkX},${chunkY}`]) {
-            chunks[`${chunkX},${chunkY}`].data[pixelX][pixelY] = color;
+          if (chunks[`${chunkX},${chunkY}`]) {
+            chunks[`${chunkX},${chunkY}`].data[pixelX][pixelY] = update.color;
             requestRender();
+          }
         }
+      });
     });
 
     socket.on("protectionUpdated", (chunkX, chunkY, value) => {
